@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_clipboard_history_tree" model="ir.ui.view">
+        <field name="name">clipboard.history.tree</field>
+        <field name="model">clipboard.history</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="copied_text"/>
+                <field name="source_model"/>
+                <field name="copied_datetime"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>

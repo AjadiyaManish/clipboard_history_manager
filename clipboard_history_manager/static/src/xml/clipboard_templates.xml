@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="clipboard_history_manager.ClipboardSystray">
+
+        <div class="o_clipboard_systray">
+            <button class="clipboard_systray_btn" t-on-click="toggleSidebar" title="Clipboard Manager">
+                <i class="fa fa-clipboard"/>
+            </button>
+        </div>
+
+        <div t-if="state.open" class="clipboard_sidebar_overlay" t-on-click="toggleSidebar">
+            <div class="clipboard_sidebar" t-on-click.stop="">
+
+                <div class="clipboard_header">
+                    <h4>
+                        <i class="fa fa-clipboard" style="margin-right: 10px;"/>
+                        Clipboard Manager
+                    </h4>
+
+                    <button class="btn btn-sm btn-icon"
+                            t-on-click="clearAll"
+                            t-if="state.activeTab === 'history'"
+                            title="Clear all clipboard history">
+                        <i class="fa fa-trash-o"/>
+                    </button>
+                </div>
+
+                <!-- Modern Tab Navigation -->
+                <div class="clipboard_tabs">
+                    <button class="clipboard_tab"
+                            t-att-class="{'active': state.activeTab === 'history'}"
+                            t-on-click="() => this.switchTab('history')"
+                            title="View clipboard history">
+                        <i class="fa fa-history"/>
+                        <span>History</span>
+                    </button>
+                    <button class="clipboard_tab"
+                            t-att-class="{'active': state.activeTab === 'bookmark'}"
+                            t-on-click="() => this.switchTab('bookmark')"
+                            title="View bookmarks">
+                        <i class="fa fa-star"/>
+                        <span>Bookmarks</span>
+                    </button>
+                    <button class="clipboard_tab"
+                            t-att-class="{'active': state.activeTab === 'settings'}"
+                            t-on-click="() => this.switchTab('settings')"
+                            title="Settings">
+                        <i class="fa fa-cog"/>
+                        <span>Settings</span>
+                    </button>
+                </div>
+
+                <!-- Search Box (Hidden for Settings) -->
+                <div t-if="state.activeTab !== 'settings'"
+                     class="clipboard_search_container">
+                    <div class="clipboard_search_wrapper">
+                        <i class="fa fa-search clipboard_search_icon"/>
+                        <input type="text"
+                               class="clipboard_search_input"
+                               placeholder="Search items..."
+                               t-model="state.search"
+                               t-att-value="state.search"/>
+                        <button t-if="state.search"
+                                class="clipboard_search_clear"
+                                t-on-click="clearSearch"
+                                title="Clear search">
+                            <i class="fa fa-times"/>
+                        </button>
+                    </div>
+                    <t t-if="state.search">
+                        <div class="clipboard_search_result_count">
+                            <span t-if="filteredHistory.length === 1">1 result found</span>
+                            <span t-else="">
+                                <t t-esc="filteredHistory.length"/> results found
+                            </span>
+                        </div>
+                    </t>
+                </div>
+
+                <!-- History Tab Content -->
+                <div t-if="state.activeTab === 'history'" class="clipboard_history_list">
+
+                    <t t-if="filteredHistory.length === 0">
+                        <div style="padding: 60px 24px; text-align: center;">
+                            <div style="font-size: 48px; color: var(--text-tertiary); margin-bottom: 16px; opacity: 0.5;">
+                                <i class="fa fa-clipboard"/>
+                            </div>
+                            <p style="font-size: 14px; color: var(--text-secondary); font-weight: 500;">
+                                <t t-if="state.search">No results found</t>
+                                <t t-else="">Start copying text to build your clipboard history</t>
+                            </p>
+                        </div>
+                    </t>
+
+                    <t t-foreach="filteredHistory"
+                       t-as="item"
+                       t-key="item.id">
+
+                        <div class="clipboard_item">
+                            <div class="clipboard_text_wrapper">
+                                <div class="clipboard_text" t-att-title="item.copied_text">
+                                    <t t-esc="item.copied_text"/>
+                                    <span t-if="item.copy_count > 1"
+                                          class="clipboard_count"
+                                          t-att-title="`Copied ${item.copy_count} times`">
+                                        ×<t t-esc="item.copy_count"/>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div class="clipboard_footer">
+                                    <small><i class="fa fa-clock-o" style="margin-right: 4px;"/><t t-esc="item.copied_datetime"/></small>
+                                </div>
+
+                                <div class="clipboard_actions">
+                                    <button class="clipboard_action_btn copy-btn"
+                                            t-on-click="() => this.copyAgain(item.copied_text)"
+                                            title="Copy to clipboard">
+                                        <i class="fa fa-copy"/>
+                                    </button>
+
+                                    <button class="clipboard_action_btn bookmark-btn"
+                                            t-att-class="{'bookmarked': item.is_bookmarked}"
+                                            t-on-click="() => this.toggleBookmark(item)"
+                                            t-att-title="item.is_bookmarked ? 'Remove bookmark' : 'Add bookmark'">
+                                        <i class="fa" t-att-class="item.is_bookmarked ? 'fa-star' : 'fa-star-o'"/>
+                                    </button>
+
+                                    <button class="clipboard_action_btn delete-btn"
+                                            t-on-click="() => this.deleteItem(item)"
+                                            title="Delete item">
+                                        <i class="fa fa-trash-o"/>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </t>
+
+                </div>
+
+                <!-- Bookmark Tab Content -->
+                <div t-if="state.activeTab === 'bookmark'" class="clipboard_history_list">
+
+                    <t t-if="filteredHistory.length === 0">
+                        <div style="padding: 60px 24px; text-align: center;">
+                            <div style="font-size: 48px; color: var(--text-tertiary); margin-bottom: 16px; opacity: 0.5;">
+                                <i class="fa fa-star"/>
+                            </div>
+                            <p style="font-size: 14px; color: var(--text-secondary); font-weight: 500;">
+                                <t t-if="state.search">No bookmarks found</t>
+                                <t t-else="">No bookmarks yet. Star items to bookmark them</t>
+                            </p>
+                        </div>
+                    </t>
+
+                    <t t-foreach="filteredHistory"
+                       t-as="item"
+                       t-key="item.id">
+
+                        <div class="clipboard_item">
+                            <div class="clipboard_text_wrapper">
+                                <div style="color: var(--secondary-color); margin-right: 8px; font-size: 16px;">
+                                    <i class="fa fa-star"/>
+                                </div>
+                                <div class="clipboard_text" t-att-title="item.copied_text">
+                                    <t t-esc="item.copied_text"/>
+                                    <span t-if="item.copy_count > 1"
+                                          class="clipboard_count"
+                                          t-att-title="`Copied ${item.copy_count} times`">
+                                        ×<t t-esc="item.copy_count"/>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div class="clipboard_footer">
+                                    <small><i class="fa fa-clock-o" style="margin-right: 4px;"/><t t-esc="item.copied_datetime"/></small>
+                                </div>
+
+                                <div class="clipboard_actions">
+                                    <button class="clipboard_action_btn copy-btn"
+                                            t-on-click="() => this.copyAgain(item.copied_text)"
+                                            title="Copy to clipboard">
+                                        <i class="fa fa-copy"/>
+                                    </button>
+
+                                    <button class="clipboard_action_btn bookmark-btn bookmarked"
+                                            t-on-click="() => this.toggleBookmark(item)"
+                                            title="Remove bookmark">
+                                        <i class="fa fa-star"/>
+                                    </button>
+
+                                    <button class="clipboard_action_btn delete-btn"
+                                            t-on-click="() => this.deleteItem(item)"
+                                            title="Delete item">
+                                        <i class="fa fa-trash-o"/>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </t>
+
+                </div>
+
+                <!-- Settings Tab Content -->
+                <div t-if="state.activeTab === 'settings'" class="clipboard_settings">
+                    <div style="padding: 24px;">
+
+                        <!-- Clipboard Enable/Disable Setting -->
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <label>
+                                    <strong>
+                                        <i class="fa fa-clipboard" style="margin-right: 8px; color: var(--primary-color);"/>
+                                        Enable Clipboard Manager
+                                    </strong>
+                                    <p style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
+                                        Capture and store copied text
+                                    </p>
+                                </label>
+                            </div>
+                            <div class="setting-toggle">
+                                <label class="toggle-switch">
+                                    <input type="checkbox"
+                                           t-model="state.clipboardEnabled"
+                                           t-on-change="toggleClipboardEnabled"/>
+                                    <span class="toggle-slider"/>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Notifications Setting -->
+                        <div class="setting-item">
+                            <div class="setting-label">
+                                <label>
+                                    <strong>
+                                        <i class="fa fa-bell" style="margin-right: 8px; color: var(--primary-color);"/>
+                                        Notifications
+                                    </strong>
+                                    <p style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
+                                        Show notifications for all actions
+                                    </p>
+                                </label>
+                            </div>
+                            <div class="setting-toggle">
+                                <label class="toggle-switch">
+                                    <input type="checkbox"
+                                           t-model="state.notificationsEnabled"
+                                           t-on-change="toggleNotifications"/>
+                                    <span class="toggle-slider"/>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Info Section -->
+                        <div style="margin-top: 32px; padding: 24px; background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%); border-radius: 10px; border: 1px solid var(--primary-light);">
+                            <p style="color: var(--text-primary); font-size: 14px; font-weight: 600; margin-bottom: 12px;">
+                                <i class="fa fa-star-o" style="margin-right: 8px; color: var(--primary-color);"/>
+                                Premium Features
+                            </p>
+                            <ul style="color: var(--text-secondary); font-size: 13px; padding-left: 20px; margin: 0; line-height: 1.8;">
+                                <li>📋 Auto-capture copied text</li>
+                                <li>⭐ Bookmark important items</li>
+                                <li>🔍 Smart search and filtering</li>
+                                <li>📊 Track copy frequency</li>
+                                <li>🔔 Customizable notifications</li>
+                            </ul>
+                        </div>
+
+                        <p style="color: var(--text-tertiary); font-size: 11px; margin-top: 24px; text-align: center; font-weight: 500;">
+                            <i class="fa fa-check" style="margin-right: 4px; color: var(--success-color);"/>
+                            Version 1.0.0
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </t>
+
+</templates>
