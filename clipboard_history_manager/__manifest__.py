@@ -18,9 +18,9 @@ Perfect for improving productivity and managing frequently copied content inside
     """,
 
     'category': 'Productivity',
-    'author': 'Envision Technolabs',
-    'maintainer': 'Envision Technolabs',
-    'website': 'https://www.envisiontechnolabs.com',
+    'author': 'Nuvexa Technology',
+    'maintainer': 'Nuvexa Technology',
+    'website': 'https://nuvexatechnology.netlify.app',
     'license': 'LGPL-3',
     'price': 25.00,
     'currency': 'USD',
